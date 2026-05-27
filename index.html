@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RetroPlay — Console Gaming Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --cream: #f5f0e8;
+    --orange: #ff5c1a;
+    --orange-dim: #c43d08;
+    --purple: #1a0a2e;
+    --purple-mid: #2d1054;
+    --gold: #e8b84b;
+    --gold-dim: #c49a2a;
+    --green: #00e5a0;
+    --green-dim: #00b87c;
+    --white: #ffffff;
+    --gray: #888;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background: var(--black);
+    color: var(--cream);
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 400;
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* CUSTOM CURSOR */
+  .cursor {
+    width: 12px; height: 12px;
+    background: var(--orange);
+    border-radius: 50%;
+    position: fixed;
+    top: 0; left: 0;
+    pointer-events: none;
+    z-index: 9999;
+    transform: translate(-50%, -50%);
+    transition: transform 0.08s ease, background 0.2s;
+    mix-blend-mode: difference;
+  }
+  .cursor.big {
+    transform: translate(-50%, -50%) scale(4);
+    background: var(--orange);
+  }
+
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+    opacity: 0.03;
+    pointer-events: none;
+    z-index: 9998;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 3rem;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: rgba(10,10,10,0.85);
+    backdrop-filter: blur(12px);
+  }
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--orange);
+    letter-spacing: 0.08em;
+  }
+  .nav-links { display: flex; gap: 2rem; list-style: none; }
+  .nav-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--gray);
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--cream); }
+  .nav-cta {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--black);
+    background: var(--orange);
+    padding: 0.5rem 1.2rem;
+    text-decoration: none;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    font-weight: 700;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .nav-cta:hover { background: var(--cream); transform: translateY(-1px); }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+    padding: 8rem 3rem 4rem;
+    position: relative;
+    overflow: hidden;
+    gap: 4rem;
+  }
+  .hero-bg {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 60% at 70% 50%, rgba(255,92,26,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 20% 80%, rgba(26,10,46,0.8) 0%, transparent 60%);
+  }
+  .hero-grid-lines {
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+  .hero-left { position: relative; z-index: 2; }
+  .hero-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--orange);
+    border: 1px solid var(--orange);
+    padding: 0.3rem 0.8rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(4rem, 8vw, 7.5rem);
+    line-height: 0.92;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+    color: var(--cream);
+  }
+  .hero-title span { color: var(--orange); display: block; }
+  .hero-subtitle {
+    font-size: 1.1rem;
+    color: var(--gray);
+    max-width: 400px;
+    margin-bottom: 2.5rem;
+    line-height: 1.7;
+    font-weight: 300;
+  }
+  .hero-price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  .hero-price {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--gold);
+    letter-spacing: 0.04em;
+  }
+  .hero-price-note {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .hero-btns { display: flex; gap: 1rem; align-items: center; }
+  .btn-primary {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--black);
+    background: var(--orange);
+    padding: 1rem 2rem;
+    text-decoration: none;
+    border: none;
+    cursor: none;
+    transition: background 0.2s, transform 0.15s;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--gold); transform: translateY(-2px); }
+  .btn-secondary {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cream);
+    border: 1px solid rgba(255,255,255,0.25);
+    padding: 1rem 2rem;
+    text-decoration: none;
+    cursor: none;
+    transition: border-color 0.2s, color 0.2s;
+  }
+  .btn-secondary:hover { border-color: var(--cream); }
+
+  /* HERO RIGHT — console visual */
+  .hero-right {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  .console-visual {
+    position: relative;
+    width: 340px;
+    height: 340px;
+  }
+  .console-ring {
+    position: absolute;
+    border-radius: 50%;
+    border: 1px solid rgba(255,92,26,0.2);
+    animation: rotateRing 20s linear infinite;
+  }
+  .console-ring:nth-child(1) { inset: 0; border-color: rgba(255,92,26,0.15); }
+  .console-ring:nth-child(2) { inset: 30px; border-color: rgba(232,184,75,0.12); animation-direction: reverse; animation-duration: 14s; }
+  .console-ring:nth-child(3) { inset: 60px; border-color: rgba(0,229,160,0.1); animation-duration: 9s; }
+  @keyframes rotateRing {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  .console-core {
+    position: absolute;
+    inset: 90px;
+    background: linear-gradient(135deg, var(--purple-mid), var(--purple));
+    border-radius: 50%;
+    border: 2px solid rgba(255,92,26,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 6px;
+    box-shadow: 0 0 60px rgba(255,92,26,0.2), inset 0 0 30px rgba(0,0,0,0.5);
+  }
+  .console-icon {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    color: var(--orange);
+    letter-spacing: 0.05em;
+  }
+  .console-dots {
+    display: flex; gap: 6px;
+  }
+  .console-dots span {
+    width: 8px; height: 8px; border-radius: 50%;
+    animation: dotPulse 2s ease-in-out infinite;
+  }
+  .console-dots span:nth-child(1) { background: var(--orange); }
+  .console-dots span:nth-child(2) { background: var(--gold); animation-delay: 0.3s; }
+  .console-dots span:nth-child(3) { background: var(--green); animation-delay: 0.6s; }
+  @keyframes dotPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.7); }
+  }
+  .orbit-dot {
+    position: absolute;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    top: 50%; left: 50%;
+    transform-origin: 0 0;
+  }
+  .orbit-dot:nth-child(5) {
+    background: var(--orange);
+    animation: orbitDot1 6s linear infinite;
+    box-shadow: 0 0 12px var(--orange);
+  }
+  .orbit-dot:nth-child(6) {
+    background: var(--gold);
+    animation: orbitDot2 9s linear infinite;
+    box-shadow: 0 0 12px var(--gold);
+  }
+  .orbit-dot:nth-child(7) {
+    background: var(--green);
+    animation: orbitDot3 12s linear infinite;
+    box-shadow: 0 0 12px var(--green);
+  }
+  @keyframes orbitDot1 {
+    from { transform: rotate(0deg) translateX(160px) translate(-50%,-50%); }
+    to   { transform: rotate(360deg) translateX(160px) translate(-50%,-50%); }
+  }
+  @keyframes orbitDot2 {
+    from { transform: rotate(120deg) translateX(130px) translate(-50%,-50%); }
+    to   { transform: rotate(480deg) translateX(130px) translate(-50%,-50%); }
+  }
+  @keyframes orbitDot3 {
+    from { transform: rotate(240deg) translateX(100px) translate(-50%,-50%); }
+    to   { transform: rotate(600deg) translateX(100px) translate(-50%,-50%); }
+  }
+
+  /* SCROLL INDICATOR */
+  .scroll-hint {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    z-index: 2;
+  }
+  .scroll-hint span {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+  }
+  .scroll-line {
+    width: 1px; height: 40px;
+    background: linear-gradient(to bottom, var(--orange), transparent);
+    animation: scrollLine 1.8s ease-in-out infinite;
+  }
+  @keyframes scrollLine {
+    0% { transform: scaleY(0); transform-origin: top; }
+    50% { transform: scaleY(1); transform-origin: top; }
+    51% { transform: scaleY(1); transform-origin: bottom; }
+    100% { transform: scaleY(0); transform-origin: bottom; }
+  }
+
+  /* MARQUEE */
+  .marquee-wrap {
+    overflow: hidden;
+    border-top: 1px solid rgba(255,255,255,0.06);
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    background: var(--purple);
+    padding: 0.75rem 0;
+  }
+  .marquee-track {
+    display: flex;
+    gap: 3rem;
+    width: max-content;
+    animation: marquee 18s linear infinite;
+  }
+  @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+  .marquee-item {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.12em;
+    white-space: nowrap;
+    color: rgba(245,240,232,0.5);
+  }
+  .marquee-item span { color: var(--orange); margin: 0 1rem; }
+
+  /* SECTIONS COMMON */
+  section { padding: 7rem 3rem; }
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.2em;
+    color: var(--orange);
+    margin-bottom: 1.2rem;
+  }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    line-height: 0.95;
+    letter-spacing: 0.03em;
+    color: var(--cream);
+    margin-bottom: 1.5rem;
+  }
+
+  /* FEATURES */
+  #features { background: var(--black); }
+  .features-intro {
+    max-width: 500px;
+    margin-bottom: 4rem;
+  }
+  .features-intro p { color: var(--gray); line-height: 1.8; font-weight: 300; }
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.07);
+  }
+  .feat {
+    background: var(--black);
+    padding: 2.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.3s;
+  }
+  .feat:hover { background: rgba(255,92,26,0.05); }
+  .feat::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: transparent;
+    transition: background 0.3s;
+  }
+  .feat:hover::before { background: var(--orange); }
+  .feat-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--orange);
+    margin-bottom: 1.5rem;
+    opacity: 0.6;
+  }
+  .feat-icon-box {
+    width: 52px; height: 52px;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.2rem;
+    transition: border-color 0.3s;
+  }
+  .feat:hover .feat-icon-box { border-color: var(--orange); }
+  .feat-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.6rem;
+    letter-spacing: 0.04em;
+    color: var(--cream);
+    margin-bottom: 0.6rem;
+  }
+  .feat-desc { color: var(--gray); font-size: 0.9rem; line-height: 1.7; font-weight: 300; }
+  .feat-tag {
+    display: inline-block;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.6rem;
+    margin-top: 1rem;
+    border: 1px solid;
+  }
+
+  /* WHY UNIQUE */
+  #unique {
+    background: var(--purple);
+    position: relative;
+    overflow: hidden;
+  }
+  #unique::before {
+    content: '';
+    position: absolute;
+    top: -200px; right: -200px;
+    width: 600px; height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,92,26,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .unique-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6rem;
+    align-items: start;
+  }
+  .unique-list { display: flex; flex-direction: column; gap: 0; margin-top: 1rem; }
+  .unique-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 2rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+  }
+  .unique-item:first-child { border-top: 1px solid rgba(255,255,255,0.07); }
+  .unique-n {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3rem;
+    color: rgba(255,92,26,0.2);
+    line-height: 1;
+    min-width: 3rem;
+  }
+  .unique-text h4 {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cream);
+    margin-bottom: 0.5rem;
+  }
+  .unique-text p { color: var(--gray); font-size: 0.9rem; line-height: 1.7; font-weight: 300; }
+
+  /* Target panel */
+  .target-panel {
+    background: rgba(255,255,255,0.03);
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 2.5rem;
+    border-radius: 0;
+  }
+  .target-panel h3 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.8rem;
+    color: var(--gold);
+    margin-bottom: 2rem;
+    letter-spacing: 0.05em;
+  }
+  .target-seg {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+  }
+  .target-seg:last-child { border-bottom: none; }
+  .target-bar-wrap { flex: 1; height: 3px; background: rgba(255,255,255,0.08); }
+  .target-bar { height: 100%; background: var(--orange); transition: width 1s ease; }
+  .target-label-text { font-family: 'DM Sans', sans-serif; font-size: 0.85rem; color: var(--cream); min-width: 130px; }
+  .target-pct { font-family: 'Space Mono', monospace; font-size: 0.7rem; color: var(--gray); min-width: 34px; text-align: right; }
+
+  /* STORIES */
+  #stories { background: var(--black); }
+  .stories-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 3rem;
+  }
+  .story-card {
+    border: 1px solid rgba(255,255,255,0.08);
+    padding: 2.5rem;
+    position: relative;
+  }
+  .story-card::before {
+    content: '"';
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 8rem;
+    color: var(--orange);
+    opacity: 0.12;
+    position: absolute;
+    top: -1rem; left: 1.5rem;
+    line-height: 1;
+    pointer-events: none;
+  }
+  .story-card p {
+    color: var(--cream);
+    font-size: 1rem;
+    line-height: 1.8;
+    font-weight: 300;
+    font-style: italic;
+    position: relative;
+    z-index: 1;
+  }
+  .story-card footer {
+    margin-top: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  .story-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    color: var(--black);
+    font-weight: 700;
+  }
+  .story-meta span { display: block; }
+  .story-name { font-size: 0.85rem; color: var(--cream); font-weight: 500; }
+  .story-role { font-family: 'Space Mono', monospace; font-size: 0.65rem; color: var(--gray); text-transform: uppercase; letter-spacing: 0.08em; }
+
+  /* PRICING */
+  #pricing {
+    background: var(--purple);
+    position: relative;
+  }
+  .pricing-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .price-card {
+    border: 1px solid rgba(255,255,255,0.1);
+    padding: 2rem;
+    position: relative;
+    background: rgba(255,255,255,0.02);
+  }
+  .price-card.featured {
+    border-color: var(--orange);
+    background: rgba(255,92,26,0.06);
+  }
+  .price-card.featured::before {
+    content: 'BEST DEAL';
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--black);
+    background: var(--orange);
+    padding: 0.3rem 0.8rem;
+    position: absolute;
+    top: -1px; right: 1.5rem;
+    transform: translateY(-100%);
+  }
+  .price-card-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--gray);
+    margin-bottom: 1rem;
+  }
+  .price-value {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 3.5rem;
+    color: var(--cream);
+    letter-spacing: 0.04em;
+    line-height: 1;
+    margin-bottom: 0.25rem;
+  }
+  .price-value span { font-size: 1.5rem; color: var(--gold); }
+  .price-note { font-size: 0.8rem; color: var(--gray); margin-bottom: 2rem; }
+  .price-features { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+  .price-features li {
+    font-size: 0.85rem;
+    color: var(--cream);
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-weight: 300;
+  }
+  .price-features li::before {
+    content: '';
+    width: 16px; height: 1px;
+    background: var(--orange);
+    flex-shrink: 0;
+  }
+
+  /* CHANNELS */
+  #channels { background: var(--black); }
+  .channels-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin-top: 3rem;
+  }
+  .channel-card {
+    padding: 2rem;
+    border: 1px solid rgba(255,255,255,0.07);
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s;
+  }
+  .channel-card:hover { border-color: rgba(255,92,26,0.4); }
+  .channel-emoji { font-size: 2rem; margin-bottom: 1rem; display: block; }
+  .channel-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    color: var(--cream);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+  }
+  .channel-desc { font-size: 0.85rem; color: var(--gray); line-height: 1.7; font-weight: 300; }
+  .channel-badge {
+    display: inline-block;
+    margin-top: 1rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    padding: 0.25rem 0.7rem;
+    border: 1px solid var(--orange);
+    color: var(--orange);
+  }
+
+  /* KEYWORDS */
+  #keywords { background: var(--purple); padding: 5rem 3rem; }
+  .kw-section-inner { max-width: 900px; margin: 0 auto; text-align: center; }
+  .kw-section-inner .section-title { margin-bottom: 2.5rem; }
+  .kw-cloud { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; }
+  .kw {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 0.5rem 1.1rem;
+    border: 1px solid rgba(255,255,255,0.15);
+    color: var(--cream);
+    cursor: none;
+    transition: all 0.2s;
+  }
+  .kw:hover { border-color: var(--orange); color: var(--orange); }
+  .kw.big { font-size: 1rem; padding: 0.7rem 1.5rem; }
+  .kw.accent { border-color: var(--orange); color: var(--orange); }
+  .kw.gold { border-color: var(--gold); color: var(--gold); }
+
+  /* CTA / FOOTER */
+  .cta-section {
+    background: var(--orange);
+    padding: 6rem 3rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: 'RETROPLAY';
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20vw;
+    color: rgba(0,0,0,0.08);
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+  .cta-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    color: var(--black);
+    letter-spacing: 0.04em;
+    margin-bottom: 0.5rem;
+    position: relative;
+  }
+  .cta-section p { color: rgba(0,0,0,0.6); font-size: 1rem; margin-bottom: 2rem; position: relative; }
+  .btn-dark {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--cream);
+    background: var(--black);
+    padding: 1.1rem 2.5rem;
+    text-decoration: none;
+    cursor: none;
+    position: relative;
+    transition: background 0.2s, transform 0.15s;
+    display: inline-block;
+  }
+  .btn-dark:hover { background: var(--purple); transform: translateY(-2px); }
+
+  footer {
+    background: var(--black);
+    border-top: 1px solid rgba(255,255,255,0.06);
+    padding: 2.5rem 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.5rem;
+    color: var(--orange);
+    letter-spacing: 0.08em;
+  }
+  .footer-text {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--gray);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  /* ANIMATIONS */
+  .fade-up {
+    opacity: 0;
+    transform: translateY(30px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .fade-up.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  @media (max-width: 900px) {
+    .hero { grid-template-columns: 1fr; padding: 7rem 1.5rem 4rem; }
+    .hero-right { display: none; }
+    .features-grid { grid-template-columns: 1fr; }
+    .unique-layout { grid-template-columns: 1fr; gap: 3rem; }
+    .stories-grid { grid-template-columns: 1fr; }
+    .pricing-layout { grid-template-columns: 1fr; }
+    .channels-grid { grid-template-columns: 1fr; }
+    nav { padding: 1rem 1.5rem; }
+    .nav-links { display: none; }
+    section { padding: 5rem 1.5rem; }
+    footer { flex-direction: column; gap: 1rem; text-align: center; }
+  }
+</style>
+</head>
+<body>
+
+<div class="cursor" id="cursor"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">RetroPlay</div>
+  <ul class="nav-links">
+    <li><a href="#features">Funcții</a></li>
+    <li><a href="#unique">Unicitate</a></li>
+    <li><a href="#stories">Povești</a></li>
+    <li><a href="#pricing">Preț</a></li>
+  </ul>
+  <a href="#pricing" class="nav-cta">Cumpără acum</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid-lines"></div>
+  <div class="hero-left fade-up">
+    <div class="hero-tag">Console Gaming Hub · 2026</div>
+    <h1 class="hero-title">
+      Retro<span>Play.</span>
+    </h1>
+    <p class="hero-subtitle">5 funcționalități. Un singur dispozitiv. Gaming, muzică, alarmă smart, noise control și mood lamp — totul integrat, gata de utilizare.</p>
+    <div class="hero-price-row">
+      <div class="hero-price">349 RON</div>
+      <div class="hero-price-note">per bucată<br>exclusiv eMAG</div>
+    </div>
+    <div class="hero-btns">
+      <a href="#pricing" class="btn-primary">Comandă pe eMAG</a>
+      <a href="#features" class="btn-secondary">Descoperă mai mult</a>
+    </div>
+  </div>
+  <div class="hero-right">
+    <div class="console-visual">
+      <div class="console-ring"></div>
+      <div class="console-ring"></div>
+      <div class="console-ring"></div>
+      <div class="console-core">
+        <div class="console-icon">RP</div>
+        <div class="console-dots">
+          <span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="orbit-dot"></div>
+      <div class="orbit-dot"></div>
+      <div class="orbit-dot"></div>
+    </div>
+  </div>
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee-wrap">
+  <div class="marquee-track">
+    <span class="marquee-item">GAMING<span>✦</span></span>
+    <span class="marquee-item">MUZICĂ<span>✦</span></span>
+    <span class="marquee-item">SMART ALARM<span>✦</span></span>
+    <span class="marquee-item">NOISE CONTROL<span>✦</span></span>
+    <span class="marquee-item">MOOD LAMP<span>✦</span></span>
+    <span class="marquee-item">ERGONOMIE<span>✦</span></span>
+    <span class="marquee-item">ALL-IN-ONE<span>✦</span></span>
+    <span class="marquee-item">EMAG<span>✦</span></span>
+    <span class="marquee-item">GEN Z<span>✦</span></span>
+    <span class="marquee-item">GAMING<span>✦</span></span>
+    <span class="marquee-item">MUZICĂ<span>✦</span></span>
+    <span class="marquee-item">SMART ALARM<span>✦</span></span>
+    <span class="marquee-item">NOISE CONTROL<span>✦</span></span>
+    <span class="marquee-item">MOOD LAMP<span>✦</span></span>
+    <span class="marquee-item">ERGONOMIE<span>✦</span></span>
+    <span class="marquee-item">ALL-IN-ONE<span>✦</span></span>
+    <span class="marquee-item">EMAG<span>✦</span></span>
+    <span class="marquee-item">GEN Z<span>✦</span></span>
+  </div>
+</div>
+
+<!-- FEATURES -->
+<section id="features">
+  <div class="features-intro fade-up">
+    <div class="section-label">Funcționalități</div>
+    <h2 class="section-title">Ce știe să facă?</h2>
+    <p>Selectate pe baza unui studiu de piață cu prietenii și analize psihologice comportamentale ale generației Z. Fiecare funcție rezolvă o problemă reală.</p>
+  </div>
+  <div class="features-grid">
+    <div class="feat fade-up">
+      <div class="feat-num">01 / 05</div>
+      <div class="feat-icon-box">🎮</div>
+      <div class="feat-name">Gaming Ergonomic</div>
+      <p class="feat-desc">Design gândit pentru sesiuni lungi. Formă ergonomică ce reduce oboseala mâinilor și îmbunătățește precizia în joc.</p>
+      <span class="feat-tag" style="color:var(--orange); border-color:var(--orange);">Core feature</span>
+    </div>
+    <div class="feat fade-up">
+      <div class="feat-num">02 / 05</div>
+      <div class="feat-icon-box">🎵</div>
+      <div class="feat-name">Boxă Bluetooth</div>
+      <p class="feat-desc">Se transformă instant în difuzor wireless de calitate. Sunet clar, bas puternic — fără cabluri, fără compromisuri.</p>
+      <span class="feat-tag" style="color:var(--gold); border-color:var(--gold);">Dual mode</span>
+    </div>
+    <div class="feat fade-up">
+      <div class="feat-num">03 / 05</div>
+      <div class="feat-icon-box">⏰</div>
+      <div class="feat-name">Smart Alarm</div>
+      <p class="feat-desc">Alarmă inteligentă integrată direct în consolă. Setezi, dormi, te trezești — fără alte gadgeturi pe noptieră.</p>
+      <span class="feat-tag" style="color:var(--green); border-color:var(--green);">Smart</span>
+    </div>
+    <div class="feat fade-up">
+      <div class="feat-num">04 / 05</div>
+      <div class="feat-icon-box">🔇</div>
+      <div class="feat-name">Noise Control</div>
+      <p class="feat-desc">Controlul inteligent al zgomotului din cameră. Focus maxim în gaming și study mode — distragerile dispar.</p>
+      <span class="feat-tag" style="color:var(--orange); border-color:var(--orange);">Focus mode</span>
+    </div>
+    <div class="feat fade-up" style="grid-column: span 2;">
+      <div class="feat-num">05 / 05</div>
+      <div class="feat-icon-box">💡</div>
+      <div class="feat-name">Mood Lamp Ambient</div>
+      <p class="feat-desc">Iluminat ambient adaptat stării tale. De la atmosfera intensă de gaming la relaxarea de seară — totul controlat din consolă, fără accesorii externe.</p>
+      <span class="feat-tag" style="color:var(--gold); border-color:var(--gold);">Atmosphere</span>
+    </div>
+  </div>
+</section>
+
+<!-- UNIQUE + TARGET -->
+<section id="unique">
+  <div class="unique-layout">
+    <div>
+      <div class="section-label">De ce e unic</div>
+      <h2 class="section-title">Nimeni altcineva nu face asta.</h2>
+      <div class="unique-list">
+        <div class="unique-item fade-up">
+          <div class="unique-n">01</div>
+          <div class="unique-text">
+            <h4>All-in-one real</h4>
+            <p>Singurul dispozitiv care combină gaming, audio, ambient și management al somnului. Un produs, nu cinci.</p>
+          </div>
+        </div>
+        <div class="unique-item fade-up">
+          <div class="unique-n">02</div>
+          <div class="unique-text">
+            <h4>Validat de utilizatori</h4>
+            <p>Funcțiile au fost alese pe baza unui studiu de piață cu grupul țintă și analize comportamentale ale Gen Z.</p>
+          </div>
+        </div>
+        <div class="unique-item fade-up">
+          <div class="unique-n">03</div>
+          <div class="unique-text">
+            <h4>Consum optimizat</h4>
+            <p>Prețul de cost estimat după consumul real de curent în sesiune activă. Eficiență energetică măsurabilă.</p>
+          </div>
+        </div>
+        <div class="unique-item fade-up">
+          <div class="unique-n">04</div>
+          <div class="unique-text">
+            <h4>Zero accesorii extra</h4>
+            <p>Fără cabluri inutile, fără adaptor separat. Gata de utilizare din cutie, prima dată.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="fade-up">
+      <div class="target-panel">
+        <h3>Cine îl cumpără?</h3>
+        <div class="target-seg">
+          <div class="target-label-text">Gameri 16–25 ani</div>
+          <div class="target-bar-wrap"><div class="target-bar" style="width:82%"></div></div>
+          <div class="target-pct">82%</div>
+        </div>
+        <div class="target-seg">
+          <div class="target-label-text">Studenți la cămin</div>
+          <div class="target-bar-wrap"><div class="target-bar" style="width:68%; background:var(--gold)"></div></div>
+          <div class="target-pct">68%</div>
+        </div>
+        <div class="target-seg">
+          <div class="target-label-text">Părinți (cadou)</div>
+          <div class="target-bar-wrap"><div class="target-bar" style="width:54%; background:var(--green)"></div></div>
+          <div class="target-pct">54%</div>
+        </div>
+        <div class="target-seg">
+          <div class="target-label-text">Work-from-home</div>
+          <div class="target-bar-wrap"><div class="target-bar" style="width:41%; background:var(--purple-mid)"></div></div>
+          <div class="target-pct">41%</div>
+        </div>
+        <div style="margin-top:2rem; padding-top:1.5rem; border-top:1px solid rgba(255,255,255,0.07);">
+          <div style="font-family:'Space Mono',monospace; font-size:0.6rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--gray); margin-bottom:0.8rem;">Intenție de cumpărare (studiu intern)</div>
+          <div style="font-family:'Bebas Neue',sans-serif; font-size:3rem; color:var(--orange); letter-spacing:0.04em;">78%</div>
+          <div style="font-size:0.8rem; color:var(--gray);">din respondenți ar cumpăra sau ar recomanda produsul</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORIES -->
+<section id="stories">
+  <div class="section-label">Studiu de piață</div>
+  <h2 class="section-title fade-up">Oamenii au vorbit.<br>Noi am ascultat.</h2>
+  <div class="stories-grid">
+    <div class="story-card fade-up">
+      <p>„Am întrebat 30 de prieteni ce le lipsește din gadget-urile de gaming. Toți au spus același lucru: vor un singur dispozitiv care face totul, fără să ocupe tot biroul."</p>
+      <footer>
+        <div class="story-avatar">AM</div>
+        <div class="story-meta">
+          <span class="story-name">Alexandru M.</span>
+          <span class="story-role">Gamer, 19 ani · Focus group</span>
+        </div>
+      </footer>
+    </div>
+    <div class="story-card fade-up">
+      <p>„Studiile despre comportamentul Gen Z arată că 78% folosesc telefonul ca alarmă, 65% ascultă muzică în gaming și 50% vor iluminat ambient. RetroPlay le-a pus pe toate într-una."</p>
+      <footer>
+        <div class="story-avatar" style="background:var(--gold);">IS</div>
+        <div class="story-meta">
+          <span class="story-name">Inițiativa studiu</span>
+          <span class="story-role">Analiză comportamentală online</span>
+        </div>
+      </footer>
+    </div>
+    <div class="story-card fade-up">
+      <p>„La cămin nu am loc pentru 5 gadgeturi separate. O consolă care face totul? Da. Imediat. Asta era exact ce căutam de luni întregi."</p>
+      <footer>
+        <div class="story-avatar" style="background:var(--green); color:var(--black);">MP</div>
+        <div class="story-meta">
+          <span class="story-name">Maria P.</span>
+          <span class="story-role">Studentă, 21 ani · Cămin universitar</span>
+        </div>
+      </footer>
+    </div>
+    <div class="story-card fade-up">
+      <p>„Ca părinți, voiam un cadou modern și util. RetroPlay face gaming, muzică și alarmă smart — prețul este corect, produsul este complet."</p>
+      <footer>
+        <div class="story-avatar" style="background:var(--purple-mid);">RC</div>
+        <div class="story-meta">
+          <span class="story-name">Radu C.</span>
+          <span class="story-role">Tată · Cumpărător potențial</span>
+        </div>
+      </footer>
+    </div>
+  </div>
+</section>
+
+<!-- PRICING -->
+<section id="pricing">
+  <div class="section-label">Preț & marjă</div>
+  <h2 class="section-title fade-up">Transparent.<br>Accesibil.</h2>
+  <div class="pricing-layout">
+    <div class="price-card fade-up">
+      <div class="price-card-label">Cost producție</div>
+      <div class="price-value"><span>≈</span>180 <span style="font-size:1rem">RON</span></div>
+      <div class="price-note">estimat pe consum curent în sesiune activă</div>
+      <ul class="price-features">
+        <li>Componente hardware integrate</li>
+        <li>Modul audio bluetooth</li>
+        <li>Senzor noise control</li>
+        <li>Circuit mood lamp</li>
+        <li>Smart alarm chipset</li>
+      </ul>
+    </div>
+    <div class="price-card featured fade-up">
+      <div class="price-card-label">Preț de vânzare</div>
+      <div class="price-value" style="color:var(--orange)">349 <span>RON</span></div>
+      <div class="price-note">exclusiv pe eMAG · disponibil din Q3 2026</div>
+      <ul class="price-features">
+        <li>Livrare rapidă eMAG</li>
+        <li>Garanție 12 luni</li>
+        <li>Retur 30 de zile</li>
+        <li>Packaging premium</li>
+        <li>Manual în română</li>
+      </ul>
+    </div>
+    <div class="price-card fade-up">
+      <div class="price-card-label">Marjă brută / buc.</div>
+      <div class="price-value" style="color:var(--green)">169 <span style="font-size:1rem">RON</span></div>
+      <div class="price-note">48% marjă · scalabil de la 100 bucăți</div>
+      <ul class="price-features">
+        <li>Comision eMAG inclus</li>
+        <li>Buget marketing alocat</li>
+        <li>Profit net estimat pozitiv</li>
+        <li>Break-even: 60 bucăți</li>
+        <li>Proiecție: 200+ buc/lună</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- CHANNELS -->
+<section id="channels">
+  <div class="section-label">Strategie de vânzare</div>
+  <h2 class="section-title fade-up">Unde te găsim.</h2>
+  <div class="channels-grid">
+    <div class="channel-card fade-up">
+      <span class="channel-emoji">🛒</span>
+      <div class="channel-name">eMAG</div>
+      <p class="channel-desc">Platforma principală de vânzare. Cea mai mare acoperire din România, livrare rapidă și vizibilitate maximă pentru produse electronice.</p>
+      <span class="channel-badge">Prioritar</span>
+    </div>
+    <div class="channel-card fade-up">
+      <span class="channel-emoji">📱</span>
+      <div class="channel-name">TikTok & Instagram</div>
+      <p class="channel-desc">Demo vizual al funcționalităților în format Reels și Shorts. Conținut autentic produs de micro-influenceri gaming din România.</p>
+      <span class="channel-badge">Social first</span>
+    </div>
+    <div class="channel-card fade-up">
+      <span class="channel-emoji">🎮</span>
+      <div class="channel-name">Micro-influenceri Gaming</div>
+      <p class="channel-desc">Recenzii autentice pentru publicul țintă. Parteneri cu comunități de gaming de 10k–100k followeri — mai credibil decât publicitate tradițională.</p>
+      <span class="channel-badge">Trust building</span>
+    </div>
+  </div>
+</section>
+
+<!-- KEYWORDS -->
+<section id="keywords">
+  <div class="kw-section-inner">
+    <div class="section-label">Cuvinte cheie</div>
+    <h2 class="section-title fade-up">Mesajul nostru.</h2>
+    <div class="kw-cloud">
+      <span class="kw big accent">all-in-one</span>
+      <span class="kw">gaming ergonomic</span>
+      <span class="kw big gold">gen Z</span>
+      <span class="kw">smart lifestyle</span>
+      <span class="kw">mood ambient</span>
+      <span class="kw big">noise control</span>
+      <span class="kw accent">boxă wireless</span>
+      <span class="kw">smart alarm</span>
+      <span class="kw">un singur dispozitiv</span>
+      <span class="kw gold">studiu de piață</span>
+      <span class="kw big">accesibil</span>
+      <span class="kw">exclusiv eMAG</span>
+      <span class="kw">focus mode</span>
+      <span class="kw accent">ergonomie</span>
+      <span class="kw">cămin · gaming · relaxare</span>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<div class="cta-section">
+  <h2>Gata să joci<br>diferit?</h2>
+  <p>RetroPlay este disponibil exclusiv pe eMAG · 349 RON · Livrare rapidă</p>
+  <a href="#" class="btn-dark">Comandă acum pe eMAG</a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">RetroPlay</div>
+  <div class="footer-text">Console Gaming Hub · 2026 · România</div>
+  <div class="footer-text">5 funcții · 1 consolă · Prețul tău</div>
+</footer>
+
+<script>
+  // Cursor
+  const cursor = document.getElementById('cursor');
+  document.addEventListener('mousemove', e => {
+    cursor.style.left = e.clientX + 'px';
+    cursor.style.top = e.clientY + 'px';
+  });
+  document.querySelectorAll('a, button, .kw, .feat, .channel-card').forEach(el => {
+    el.addEventListener('mouseenter', () => cursor.classList.add('big'));
+    el.addEventListener('mouseleave', () => cursor.classList.remove('big'));
+  });
+
+  // Fade-up on scroll
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        setTimeout(() => entry.target.classList.add('visible'), i * 80);
+      }
+    });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-up').forEach(el => observer.observe(el));
+
+  // Animate bars on scroll
+  const barObserver = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.querySelectorAll('.target-bar').forEach(bar => {
+          const w = bar.style.width;
+          bar.style.width = '0';
+          setTimeout(() => { bar.style.width = w; }, 200);
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  document.querySelectorAll('.target-panel').forEach(el => barObserver.observe(el));
+</script>
+</body>
+</html>
